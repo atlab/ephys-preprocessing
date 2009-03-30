@@ -5,6 +5,7 @@ args.sigmaThresh = 10;
 args.priority = 0;
 args.tstart = [];
 args.tend = [];
+args.clusId = [];
 args = parseVarArgs(args,varargin{:});
 
 % retrieve session data from db
@@ -25,15 +26,21 @@ jdb = jobDB();
 % addLfpJob(db,rec.id,jobId);
 
 % create a new clustering set
-if isempty(args.tstart)
-    beh = getBehById(db,behIds);
-    args.tstart = [beh.startTime];
+if isempty(args.clusId)
+    if isempty(args.tstart)
+        beh = getBehById(db,behIds);
+        args.tstart = [beh.startTime];
+    end
+    if isempty(args.tend)
+        beh = getBehById(db,behIds);
+        args.tend = [beh.endTime];
+    end
+    clus = newClusSet(db,rec.id,behIds,[args.tstart; args.tend]);
+else
+    clus = getClusById(db,args.clusId);
+    args.tstart = clus.timeFrames(1,:);
+    args.tend = clus.timeFrames(2,:);
 end
-if isempty(args.tend)
-    beh = getBehById(db,behIds);
-    args.tend = [beh.endTime];
-end
-clus = newClusSet(db,rec.id,behIds,[args.tstart; args.tend]);
 
 % build clustering job struct
 outPath = clus.folder;
