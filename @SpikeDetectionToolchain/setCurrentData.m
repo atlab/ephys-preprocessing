@@ -5,4 +5,4 @@ function sdt = setCurrentData(sdt,name,val)
 %
 % AE 2009-03-27
 
-sdt.current(end).(name) = val;
+sdt.current.(name) = val;

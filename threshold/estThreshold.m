@@ -39,7 +39,11 @@ for j = 1:nChunks
 end
 
 % threshold
-threshold = median(par(:,3)) + params.sigmaThresh * median(par(:,3));
+par = median(par);
+threshold = par(3) + params.sigmaThresh * par(3);
 sdt = setGlobalData(sdt,'threshold',threshold);
+sdt = setGlobalData(sdt,'noiseFrac',par(1));
+sdt = setGlobalData(sdt,'noiseMean',par(2));
+sdt = setGlobalData(sdt,'noiseStd',par(3));
 
 fprintf('  Determined threshold is %.1f muV\n',threshold/2^23*317e3)

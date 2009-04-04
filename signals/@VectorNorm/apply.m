@@ -1,7 +1,7 @@
 function x = apply(v,x)
 
 % apply vector norm
-p = getParam(v,'p');
+p = getParams(v,'p');
 switch p
     case 1
         x = sum(abs(x),2);

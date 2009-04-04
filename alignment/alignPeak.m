@@ -33,8 +33,8 @@ spikes = spikes(ndx);
 
 % upsampled peak
 if ~isempty(spikes)
-    x = x(bsxfun(@plus,spikes,win));
-    x = resample(x',up,1,len);
+    x = x(bsxfun(@plus,spikes',win'));
+    x = resample(x,up,1,len);
     [foo,peakNdx] = max(x,[],1);
     spikes = spikes - 2*len + (peakNdx'-1)/up;
 end
