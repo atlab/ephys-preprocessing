@@ -1,6 +1,7 @@
 function db = submitNewJobs(db,rec,behIds,tetrodes,varargin)
 % AE 2009-03-27
 
+args.waitTime = 1/24;
 args.sigmaThresh = 10;
 args.priority = 0;
 args.tstart = [];
@@ -18,6 +19,10 @@ acq = getAcqById(db,rec.acqId);
 recFolder = [acq.folder '/' rec.folder];
 
 jdb = jobDB();
+
+% don't start clustering right away since data is usually being copied
+% for about half an hour
+waitId = insert(jdb,[],'waitUntilLate',{now+args.waitTime},[],50);
 
 % % lfp extraction
 % lfpPath = [acq.processedFolder '/' rec.folder '_lfp'];
@@ -54,7 +59,7 @@ for i = 1:length(tetrodes)
 
     % spike detection
     params = {recFolder,tetrodes(i),outPath,'tstart',args.tstart(1),'tend',args.tend(end),'sigmaThresh',args.sigmaThresh};
-    detectId = insert(jdb,'detect_ae_path','detectSpikes',params,[],15+args.priority);
+    detectId = insert(jdb,'detect_ae_path','detectSpikes',params,waitId,15+args.priority);
     addJobToClusSet(db,clus.id,detectId,tetrodes(i));
 
     % run clustering
