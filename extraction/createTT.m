@@ -27,8 +27,10 @@ end
 
 % create spike height field
 tt.h = zeros(size(tt.w{1},2),nChans);
-for i = 1:nChans
-    tt.h(:,i) = max(tt.w{i}) - min(tt.w{i});
+if ~isempty(tt.h)
+    for i = 1:nChans
+        tt.h(:,i) = max(tt.w{i}) - min(tt.w{i});
+    end
 end
 
 % % HACK: put overlap info into tt struct

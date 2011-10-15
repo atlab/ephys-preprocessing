@@ -2,7 +2,7 @@ function detectSpikes(recDirectory,tetrode,outDir,varargin)
 % Energy-based spike detection
 % AE 2009-04-03
 
-args.sigmaThresh = 9;
+args.sigmaThresh = 10;
 args = parseVarArgs(args,varargin{:});
 
 % set up data processing
