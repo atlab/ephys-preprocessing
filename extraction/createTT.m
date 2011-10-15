@@ -1,11 +1,11 @@
-function sdt = createTT(sdt,varargin)
+function sdt = createTT(sdt, outFile)
 % Create tt structure.
-%   sdt = createTT(sdt,varargin)
+%   sdt = createTT(sdt, outFile)
 %
-% AE 2009-03-27
+% Updated: AE 2011-10-14
+% Initial: AE 2009-03-27
 
-outDir = getParams(sdt,'outDir');
-assert(~isempty(outDir),'No output directory specified!')
+assert(nargin == 2 && ~isempty(outFile), 'No output file specified!')
 
 % check if spikes were aligned
 aligned = false;
@@ -14,7 +14,7 @@ if isGlobalData(sdt,'aligned') && getGlobalData(sdt,'aligned')
 end
 
 % collect spike times and waveforms into tt structure
-nChans = getNbChannels(getRawStream(sdt));
+nChans = getNbChannels(getReader(sdt));
 tt = struct('t',[],'w',{cell(1,nChans)},'aligned',aligned);
 
 t = getChunkData(sdt,'spikeTimes');
@@ -38,10 +38,8 @@ end
 % tt.w{1}(1,overlap) = NaN;
 
 % write to disk
-tet = getParams(sdt,'tetrode');
-fileName = fullfile(getLocalPath(outDir),sprintf('Sc%u.Htt',tet));
 if isFirstChunk(sdt)
-    ah_writeTT_HDF5(fileName,tt);
+    ah_writeTT_HDF5(outFile, tt);
 else
-    ah_appendTT_HDF5(fileName,tt);
+    ah_appendTT_HDF5(outFile, tt);
 end

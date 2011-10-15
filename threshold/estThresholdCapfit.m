@@ -1,4 +1,4 @@
-function sdt = estThreshold(sdt,varargin)
+function sdt = estThresholdCapfit(sdt,varargin)
 
 params.partSize = 1e5;
 params.nParts = 20;

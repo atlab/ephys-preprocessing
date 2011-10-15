@@ -7,7 +7,7 @@ function [x,sdt] = getCurrentSignal(sdt,operator)
 % AE 2009-03-27
 
 % no-op?
-if isempty(operator)
+if nargin < 2 || isempty(operator)
     x = sdt.current.waveform;
     return
 end

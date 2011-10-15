@@ -1,8 +1,9 @@
 function varargout = run(sdt)
 % Run spike detection toolchain.
-%   tt = run(sdt)
+%   sdt = run(sdt)
 %
-% AE 2009-02-24
+% Updated: AE 2011-10-14
+% Initial: AE 2009-02-24
 
 fprintf('Starting spike detection\n')
 
@@ -12,15 +13,7 @@ for i = 1:numel(sdt.steps.init)
 end
 
 % determine number of chunks
-istart = getStartIndex(sdt);
-iend = getEndIndex(sdt);
-partSize = min(getParams(sdt,'partSize'),iend - istart + 1);
-packRec = packetReader(sdt.filtered,[1 2],'stride',[partSize 1]);
-
-chunkStart = floor(istart / partSize) + 1;
-chunkEnd = ceil(iend / partSize);
-chunks = chunkStart:chunkEnd;
-nChunks = numel(chunks);
+nChunks = size(sdt.reader, 1);
 
 % process chunks individually
 fprintf('Processing %d chunks of data\n',nChunks)
@@ -29,8 +22,8 @@ pp = 0;
 for i = 1:nChunks
     
     % read current filtered waveform chunk
-    sdt.current.waveform = packRec(chunks(i),:);
-    sdt.current.time = packRec(chunks(i)).t;
+    sdt.current.waveform = -sdt.reader(i);
+    sdt.current.time = reshape(sdt.reader(i).t, [], 1);
 
     % run individual steps
     sdt.chunks(i).spikeTimes = [];
@@ -42,7 +35,7 @@ for i = 1:nChunks
     sdt.cache = struct;
     
     % progress output
-    p = i/nChunks * 100;
+    p = i / nChunks * 100;
     if fix(p) > pp
         fprintf('  %.1f%%\n',p)
     end

@@ -1,5 +1,6 @@
-addpath(getLocalPath('/lab/libraries/detection'))
-addpath(getLocalPath('/lab/libraries/clustering_lib'))
+if ~exist('baseReaderElectrophysiology', 'file')
+    run(getLocalPath('/lab/libraries/hdf5matlab/setPath'))
+end
 
 base = fileparts(mfilename('fullpath'));
 addpath(fullfile(base,''))

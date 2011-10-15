@@ -58,5 +58,5 @@ sdt = setChunkData(sdt,'spikeWaveforms',w);
 % extract times
 Fs = getParams(sdt,'Fs');
 t = getCurrentTime(sdt);
-t = t(fix(spikes)) + subsample * 1000/Fs;
+t = t(fix(spikes)) + subsample * 1000 / Fs;
 sdt = setChunkData(sdt,'spikeTimes',t);
