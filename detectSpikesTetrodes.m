@@ -6,7 +6,7 @@ function detectSpikesTetrodes(recFile, tetrode, outFile)
 br = baseReader(recFile, sprintf('t%dc*', tetrode));
 filter = filterFactory.createBandpass(400, 600, 5800, 6000, getSamplingRate(br));
 fr = filteredReader(br, filter);
-pr = packetReader(fr, 1, 'stride', 1e5);
+pr = packetReader(fr, 1, 'stride', 1e6);
 
 % setup toolchain
 sdt = SpikeDetectionToolchain(pr);
@@ -15,7 +15,7 @@ sdt = SpikeDetectionToolchain(pr);
 detectSignal = VectorNorm('p', Inf);
 alignSignal = VectorNorm('p', 2);
 
-threshold = @(sdt) estThresholdSimple(sdt, 'operator', detectSignal, 'nParts', 2, 'sigmaThresh', 5);
+threshold = @(sdt) estThresholdSimple(sdt, 'operator', detectSignal, 'nParts', 20, 'sigmaThresh', 5);
 detection = @(sdt) detectPeak(sdt, 'operator', detectSignal);
 alignment = @(sdt) alignCOM(sdt,'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 extraction = @(sdt) extract(sdt, 'ctPoint', 10, 'windowSize', 28);

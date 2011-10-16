@@ -18,7 +18,6 @@ nChunks = size(sdt.reader, 1);
 % process chunks individually
 fprintf('Processing %d chunks of data\n',nChunks)
 sdt.chunks = struct('spikeTimes',{});
-pp = 0;
 for i = 1:nChunks
     
     % read current filtered waveform chunk
@@ -35,11 +34,7 @@ for i = 1:nChunks
     sdt.cache = struct;
     
     % progress output
-    p = i / nChunks * 100;
-    if fix(p) > pp
-        fprintf('  %.1f%%\n',p)
-    end
-    pp = p;
+    progress(i, nChunks, 20);
 end
 
 % run post-processing steps
