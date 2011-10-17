@@ -1,3 +1,5 @@
+function setPath
+
 if ~exist('baseReaderElectrophysiology', 'file')
     run(getLocalPath('/lab/libraries/hdf5matlab/setPath'))
 end
