@@ -33,12 +33,8 @@ if ~isempty(tt.h)
     end
 end
 
-% % HACK: put overlap info into tt struct
-% overlap = getChunkData(sdt,'spikeOverlaps');
-% tt.w{1}(1,overlap) = NaN;
-
 % write to disk
-if isFirstChunk(sdt)
+if ~exist(outFile, 'file')
     ah_writeTT_HDF5(outFile, tt);
 else
     ah_appendTT_HDF5(outFile, tt);

@@ -1,10 +1,10 @@
-function detectSpikesTetrodes(recFile, tetrode, outFile)
-% Detect all spikes in a tetrode recording file.
+function detectSpikesSP(recFile, channel, outFile)
+% Detect all spikes in an SP recording file.
 % AE 2011-10-14
 
 % create packetReader for data access
-br = baseReader(recFile, sprintf('t%dc*', tetrode));
-filter = filterFactory.createBandpass(400, 600, 5800, 6000, getSamplingRate(br));
+br = baseReader(recFile, sprintf('s1c%d', channel));
+filter = filterFactory.createHighpassIIR(2, 600, getSamplingRate(br)); % 2nd order butterworth
 fr = filteredReader(br, filter);
 pr = packetReader(fr, 1, 'stride', 1e6);
 
@@ -12,12 +12,9 @@ pr = packetReader(fr, 1, 'stride', 1e6);
 sdt = SpikeDetectionToolchain(pr);
 
 % individual steps
-detectSignal = MaxChannel;
-alignSignal = VectorNorm('p', 2);
-
-threshold = @(sdt) estThresholdSimple(sdt, 'operator', detectSignal, 'nParts', 20, 'sigmaThresh', 5);
-detection = @(sdt) detectPeak(sdt, 'operator', detectSignal);
-alignment = @(sdt) alignCOM(sdt,'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
+threshold = @(sdt) estThresholdSimple(sdt, 'operator', NoOp, 'nParts', 20, 'sigmaThresh', 5);
+detection = @(sdt) detectPeak(sdt, 'operator', NoOp);
+alignment = @(sdt) alignCOM(sdt,'operator', NoOp, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 extraction = @(sdt) extract(sdt, 'ctPoint', 10, 'windowSize', 28);
 saving = @(sdt) createTT(sdt, outFile);
 

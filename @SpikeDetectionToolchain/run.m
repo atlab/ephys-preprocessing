@@ -20,7 +20,7 @@ fprintf('Processing %d chunks of data\n',nChunks)
 sdt.chunks = struct('spikeTimes',{});
 for i = 1:nChunks
     
-    % read current filtered waveform chunk
+    % read current filtered waveform chunk (flip so peaks are upwards)
     sdt.current.waveform = -sdt.reader(i);
     sdt.current.time = reshape(sdt.reader(i).t, [], 1);
 
