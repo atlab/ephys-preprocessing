@@ -12,10 +12,11 @@ function sdt = detectPeakExcludeNoise(sdt, varargin)
 
 params.segLen = 10;         % sec
 params.noiseThresh = 10;    % greater than x times threshold is noise
+params.refrac = 0.3;        % ms refractory for spikes
 params = parseVarArgs(params, varargin{:});
 
 [x, sdt] = getCurrentSignal(sdt);
-[y, sdt] = getCurrentSignal(sdt, VectorNorm('p', 2));
+[r, sdt] = getCurrentSignal(sdt, VectorNorm('p', 2));
 thresh = getGlobalData(sdt, 'threshold');
 
 % detect periods of noise
@@ -42,37 +43,31 @@ for i = 1 : m
 end
 sdt = setGlobalData(sdt, 'noiseArtifacts', artifacts);
 
-% detect local maxima
-mx = max(x, [], 2);
-r = sum(x .* x, 2);
+% detect local maxima above threshold
+above = any(bsxfun(@gt, x, thresh), 2);
 dr = diff(r);
-maxIndices = find(mx(2 : end - 1) > thresh & dr(1 : end - 1) > 0 & dr(2 : end) < 0) + 1;
+spikes = find(~noise(2 : end - 1) & above(2 : end - 1) & dr(1 : end - 1) > 0 & dr(2 : end) < 0) + 1;
 
-% remove local maxima too close to each other
-[maxVals, maxOrder] = sort(r(maxIndices), 'descend');
-keep = true(size(maxIndices));
-for i = 1 : numel(maxIndices)
-    
+% remove local maxima too close to each other (starting with largest
+% working down to smallest spike)
+[~, maxOrder] = sort(r(spikes), 'descend');
+refrac = params.refrac / 1000 * Fs;
+nMax = numel(spikes);
+keep = true(nMax, 1);
+for i = 1 : nMax
+    current = maxOrder(i);
+    if keep(current)
+        k = current - 1;
+        while k > 0 && keep(k) && spikes(current) - spikes(k) < refrac
+            keep(k) = false;
+            k = k - 1;
+        end
+        k = current + 1;
+        while k <= nMax && keep(k) && spikes(k) - spikes(current) < refrac
+            keep(k) = false;
+            k = k + 1;
+        end
+    end
 end
-
-% 
-% above = any(bsxfun(@gt, x, thresh), 2);
-% i = 1;
-% while i < N
-%     while i <= N && (~spikes(i) || ~above(i))   % go to next spike
-%         spikes(i) = false;
-%         i = i + 1;
-%     end
-%     start = i;
-%     while i <= N && spikes(i) && above(i)       % go to end of spike
-%         i = i + 1;
-%     end
-%     [~, ndx] = max(y(start : i - 1));
-%     spikes(start : i) = false;
-%     spikes(start + ndx - 1) = true;
-% end
-% spikes = find(spikes);
-
-
-
+spikes = spikes(keep);
 sdt = setCurrentData(sdt, 'spikeSamples', spikes);
