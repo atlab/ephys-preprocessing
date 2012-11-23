@@ -1,8 +1,7 @@
 function sdt = detectPeakExcludeNoise(sdt, varargin)
 % Detect spikes as local maxima above threshold.
 %   sdt = detectPeak(sdt) detects spikes by finding all local maxima above
-%   a certain threshold. Between two adjacent maxima the trace has to go
-%   drop below threshold
+%   a certain threshold.
 %
 %   This function also automatically excludes segments in the data that
 %   have excessively large variance (which happens when the preamps were
@@ -12,7 +11,6 @@ function sdt = detectPeakExcludeNoise(sdt, varargin)
 
 params.segLen = 10;         % sec
 params.noiseThresh = 10;    % greater than x times threshold is noise
-params.refrac = 0.3;        % ms refractory for spikes
 params = parseVarArgs(params, varargin{:});
 
 [x, sdt] = getCurrentSignal(sdt);
@@ -48,26 +46,4 @@ above = any(bsxfun(@gt, x, thresh), 2);
 dr = diff(r);
 spikes = find(~noise(2 : end - 1) & above(2 : end - 1) & dr(1 : end - 1) > 0 & dr(2 : end) < 0) + 1;
 
-% remove local maxima too close to each other (starting with largest
-% working down to smallest spike)
-[~, maxOrder] = sort(r(spikes), 'descend');
-refrac = params.refrac / 1000 * Fs;
-nMax = numel(spikes);
-keep = true(nMax, 1);
-for i = 1 : nMax
-    current = maxOrder(i);
-    if keep(current)
-        k = current - 1;
-        while k > 0 && keep(k) && spikes(current) - spikes(k) < refrac
-            keep(k) = false;
-            k = k - 1;
-        end
-        k = current + 1;
-        while k <= nMax && keep(k) && spikes(k) - spikes(current) < refrac
-            keep(k) = false;
-            k = k + 1;
-        end
-    end
-end
-spikes = spikes(keep);
 sdt = setCurrentData(sdt, 'spikeSamples', spikes);

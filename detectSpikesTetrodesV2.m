@@ -24,12 +24,14 @@ threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
 threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 1, 'sigmaThresh', 5);
 detection = @(sdt) detectPeakExcludeNoise(sdt, 'segLen', 5, 'noiseThresh', 10);
 alignment = @(sdt) alignCOM(sdt, 'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
+removal = @(sdt) removeDoubles(sdt, 'refrac', 0.3);
 extraction = @(sdt) extract(sdt, 'ctPoint', 10, 'windowSize', 28);
 saving = @(sdt) createTT(sdt, outFile);
 
 sdt = addStep(sdt, threshold, 'init');
 sdt = addStep(sdt, detection, 'regular');
 sdt = addStep(sdt, alignment, 'regular');
+sdt = addStep(sdt, removal, 'regular');
 sdt = addStep(sdt, extraction, 'regular');
 sdt = addStep(sdt, saving, 'regular');
 
