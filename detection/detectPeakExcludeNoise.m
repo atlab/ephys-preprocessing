@@ -10,7 +10,7 @@ function sdt = detectPeakExcludeNoise(sdt, varargin)
 %
 % AE 2012-11-09
 
-params.segLen = 5;          % sec
+params.segLen = 10;         % sec
 params.noiseThresh = 10;    % greater than x times threshold is noise
 params = parseVarArgs(params, varargin{:});
 
@@ -20,19 +20,27 @@ thresh = getGlobalData(sdt, 'threshold');
 
 % detect periods of noise
 Fs = getSamplingRate(getReader(sdt));
+t = getCurrentTime(sdt);
 N = size(x, 1);
 n = Fs * params.segLen;
 m = ceil(N / n);
-spikes = false(N, 1);
+noise = false(N, 1);
+artifacts = getGlobalData(sdt, 'noiseArtifacts');
 for i = 1 : m
     if i < m
         ndx = (1 : n) + (i - 1) * m;
     else
         ndx = ((i - 1) * m + 1) : N;
     end
-    spikes(ndx) = all(median(abs(x(ndx, :)), 1) ...
-                        < thresh * 0.6745 * params.noiseThresh, 2);
+    isArtifact = any(median(abs(x(ndx, :)), 1) > thresh * 0.6745 * params.noiseThresh, 2);
+    noise(ndx) = isArtifact;
+    if isArtifact && (isempty(artifacts) || artifacts(end, 2) > 0) % start of artifact period
+        artifacts(end + 1, 1) = t(ndx(1)); %#ok
+    elseif ~isArtifact && ~isempty(artifacts) && artifacts(end, 2) == 0 % end of artifact period
+        artifacts(end, 2) = t(ndx(1));
+    end
 end
+sdt = setGlobalData(sdt, 'noiseArtifacts', artifacts);
 
 % detect local maxima
 mx = max(x, [], 2);

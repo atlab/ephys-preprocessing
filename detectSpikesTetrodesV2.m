@@ -1,4 +1,4 @@
-function detectSpikesTetrodesV2(recFile, tetrode, outFile)
+function artifacts = detectSpikesTetrodesV2(recFile, tetrode, outFile)
 % Detect all spikes in a tetrode recording file.
 %   This is an improved version that automatically removes noise segments
 %   in the data, which sometimes occurs at the beginning and the end of
@@ -21,8 +21,9 @@ sdt = SpikeDetectionToolchain(pr);
 alignSignal = VectorNorm('p', 2);
 
 threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
+threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 1, 'sigmaThresh', 5);
 detection = @(sdt) detectPeakExcludeNoise(sdt, 'segLen', 5, 'noiseThresh', 10);
-alignment = @(sdt) alignCOM(sdt,'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
+alignment = @(sdt) alignCOM(sdt, 'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 extraction = @(sdt) extract(sdt, 'ctPoint', 10, 'windowSize', 28);
 saving = @(sdt) createTT(sdt, outFile);
 
@@ -32,8 +33,13 @@ sdt = addStep(sdt, alignment, 'regular');
 sdt = addStep(sdt, extraction, 'regular');
 sdt = addStep(sdt, saving, 'regular');
 
+sdt = setGlobalData(sdt, 'noiseArtifacts', zeros(0, 2));
+
 % run it
 run(sdt);                                                            
 
 % cleanup
 close(br);
+
+% return periods of noise artifacts
+artifacts = getGlobalData(sdt, 'noiseArtifacts');
