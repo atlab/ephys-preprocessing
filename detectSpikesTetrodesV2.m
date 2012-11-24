@@ -21,7 +21,6 @@ sdt = SpikeDetectionToolchain(pr);
 alignSignal = VectorNorm('p', 2);
 
 threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
-threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 1, 'sigmaThresh', 5);
 detection = @(sdt) detectPeakExcludeNoise(sdt, 'segLen', 5, 'noiseThresh', 10);
 alignment = @(sdt) alignCOM(sdt, 'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 removal = @(sdt) removeDoubles(sdt, 'refrac', 0.3);
