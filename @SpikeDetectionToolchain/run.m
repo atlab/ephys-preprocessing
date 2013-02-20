@@ -23,6 +23,7 @@ for i = 1:nChunks
     % read current filtered waveform chunk (flip so peaks are upwards)
     sdt.current.waveform = -toMuV(sdt.reader, sdt.reader(i));
     sdt.current.time = reshape(sdt.reader(i).t, [], 1);
+    sdt.current.chunk = i;
 
     % run individual steps
     sdt.chunks(i).spikeTimes = [];

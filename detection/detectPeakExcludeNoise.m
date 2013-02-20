@@ -9,34 +9,47 @@ function sdt = detectPeakExcludeNoise(sdt, varargin)
 %
 % AE 2012-11-09
 
-params.segLen = 10;         % sec
-params.noiseThresh = 10;    % greater than x times threshold is noise
+params.segLen = 1000;       % samples (~30 ms)
+params.minGap = 160;        % segments (5 sec)
+params.noiseThresh = 30;    % muV robust SD within segment
 params = parseVarArgs(params, varargin{:});
 
 [x, sdt] = getCurrentSignal(sdt);
 [r, sdt] = getCurrentSignal(sdt, VectorNorm('p', 2));
 thresh = getGlobalData(sdt, 'threshold');
 
-% detect periods of noise
-Fs = getSamplingRate(getReader(sdt));
+% crop end of recording to multiples of params.segLen samples
+reader = getReader(sdt);
+[n, k] = size(x);
+m = fix(n / params.segLen);
+if getCurrentChunk(sdt) == length(reader)
+    n = params.segLen * m;
+    x = x(1 : n, :);
+    r = r(1 : n);
+else
+    assert(~mod(n, params.segLen), 'segLen must be integer fraction of chunk size!')
+end
+
+% detect noise bursts
+xr = reshape(x, [params.segLen, m ,k]);
+noiseBursts = find(any(median(abs(xr), 1) / 0.6745 > params.noiseThresh, 3));
+
+% close gaps shorter than params.minGaps
 t = getCurrentTime(sdt);
-N = size(x, 1);
-n = Fs * params.segLen;
-m = ceil(N / n);
-noise = false(N, 1);
+Fs = getSamplingRate(reader);
+dt = params.minGap * params.segLen / Fs * 1000;
 artifacts = getGlobalData(sdt, 'noiseArtifacts');
-for i = 1 : m
-    if i < m
-        ndx = (1 : n) + (i - 1) * m;
-    else
-        ndx = ((i - 1) * m + 1) : N;
-    end
-    isArtifact = any(median(abs(x(ndx, :)), 1) > thresh * 0.6745 * params.noiseThresh, 2);
-    noise(ndx) = isArtifact;
-    if isArtifact && (isempty(artifacts) || artifacts(end, 2) > 0) % start of artifact period
-        artifacts(end + 1, 1) = t(ndx(1)); %#ok
-    elseif ~isArtifact && ~isempty(artifacts) && artifacts(end, 2) == 0 % end of artifact period
-        artifacts(end, 2) = t(ndx(1));
+for i = 1 : numel(noiseBursts)
+    index = (noiseBursts(i) - 1) * params.segLen;
+    if isempty(artifacts) || artifacts(end, 2) > 0
+        % start of artifact period
+        artifacts(end + 1, 1) = t(index + 1) - dt / 2; %#ok
+    elseif ~isempty(artifacts) && artifacts(end, 2) == 0
+        if i == numel(noiseBursts) && noiseBursts(i) < m - params.minGap / 2 ...
+                || i < numel(noiseBursts) && diff(noiseBursts(i : i + 1)) > params.minGap
+            % end of artifact period
+            artifacts(end, 2) = t(index + params.segLen) + dt / 2;
+        end
     end
 end
 sdt = setGlobalData(sdt, 'noiseArtifacts', artifacts);
@@ -44,6 +57,6 @@ sdt = setGlobalData(sdt, 'noiseArtifacts', artifacts);
 % detect local maxima above threshold
 above = any(bsxfun(@gt, x, thresh), 2);
 dr = diff(r);
-spikes = find(~noise(2 : end - 1) & above(2 : end - 1) & dr(1 : end - 1) > 0 & dr(2 : end) < 0) + 1;
+spikes = find(above(2 : end - 1) & dr(1 : end - 1) > 0 & dr(2 : end) < 0) + 1;
 
 sdt = setCurrentData(sdt, 'spikeSamples', spikes);
