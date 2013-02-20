@@ -29,7 +29,7 @@ sd = zeros(nChunks, 1);
 for j = 1:nChunks
     x = -reader(chunks(j));
     k = size(x, 2);
-    sd(j, 1:k) = median(abs(x), 1) / 0.6745;
+    sd(j, 1:k) = toMuV(reader, median(abs(x), 1) / 0.6745);
 end
 
 % threshold
@@ -37,4 +37,4 @@ threshold = params.sigmaThresh * median(sd, 1);
 sdt = setGlobalData(sdt, 'threshold', threshold);
 sdt = setGlobalData(sdt, 'noiseStd', sd);
 
-fprintf('  Determined threshold is %.1f muV\n', toMuV(reader, threshold))
+fprintf('  Determined threshold is %.1f muV\n', threshold)
