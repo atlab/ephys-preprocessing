@@ -35,7 +35,8 @@ end
 
 % write to disk
 if ~exist(outFile, 'file')
-    ah_writeTT_HDF5(outFile, tt, 'samplingRate', getParams(sdt, 'Fs'));
+    ah_writeTT_HDF5(outFile, tt, 'samplingRate', getParams(sdt, 'Fs'), ...
+        'version', 2, 'units', 'muV');
 else
     ah_appendTT_HDF5(outFile, tt);
 end
