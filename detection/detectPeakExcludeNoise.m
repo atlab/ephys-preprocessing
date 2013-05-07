@@ -15,7 +15,7 @@ params.noiseThresh = 30;    % muV robust SD within segment
 params = parseVarArgs(params, varargin{:});
 
 [x, sdt] = getCurrentSignal(sdt);
-[r, sdt] = getCurrentSignal(sdt, VectorNorm('p', 2));
+[r, sdt] = getCurrentSignal(sdt, SignedVectorNorm('p', 2));
 thresh = getGlobalData(sdt, 'threshold');
 
 % crop end of recording to multiples of params.segLen samples

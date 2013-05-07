@@ -18,7 +18,7 @@ pr = packetReader(fr, 1, 'stride', 1e6);
 sdt = SpikeDetectionToolchain(pr);
 
 % individual steps
-alignSignal = VectorNorm('p', 2);
+alignSignal = SignedVectorNorm('p', 2);
 
 threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
 detection = @(sdt) detectPeakExcludeNoise(sdt);
