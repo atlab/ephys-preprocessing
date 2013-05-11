@@ -1,4 +1,4 @@
-function artifacts = detectSpikesTetrodesV2(recFile, tetrode, outFile)
+function artifacts = detectSpikesTetrodesV2(reader, outFile)
 % Detect all spikes in a tetrode recording file.
 %   This is an improved version that automatically removes noise segments
 %   in the data, which sometimes occurs at the beginning and the end of
@@ -9,9 +9,8 @@ function artifacts = detectSpikesTetrodesV2(recFile, tetrode, outFile)
 % AE 2012-11-09
 
 % create packetReader for data access
-br = baseReader(recFile, sprintf('t%dc*', tetrode));
-filter = filterFactory.createBandpass(400, 600, 5800, 6000, getSamplingRate(br));
-fr = filteredReader(br, filter);
+filter = filterFactory.createBandpass(400, 600, 5800, 6000, getSamplingRate(reader));
+fr = filteredReader(reader, filter);
 pr = packetReader(fr, 1, 'stride', 1e6);
 
 % setup toolchain
@@ -40,7 +39,7 @@ sdt = setGlobalData(sdt, 'noiseArtifacts', zeros(0, 2));
 run(sdt);                                                            
 
 % cleanup
-close(br);
+close(reader);
 
 % return periods of noise artifacts
 artifacts = getGlobalData(sdt, 'noiseArtifacts');
