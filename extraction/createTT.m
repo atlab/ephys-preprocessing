@@ -33,8 +33,11 @@ if ~isempty(tt.h)
     end
 end
 
+% make sure to clobber any preexisting files
+dataWritten = ~isFirstChunk(sdt);
+
 % write to disk
-if ~exist(outFile, 'file')
+if ~exist(outFile, 'file') || ~dataWritten
     ah_writeTT_HDF5(outFile, tt, 'samplingRate', getParams(sdt, 'Fs'), ...
         'version', 2, 'units', 'muV');
 else

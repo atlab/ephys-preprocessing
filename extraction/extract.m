@@ -47,9 +47,13 @@ if any(subsample ~= 0)
         w(:,:,i) = interpcus(iWin,reshape(wave(x,i),size(x)),xi);
     end
 else
-    ndx = bsxfun(@plus,spikes,win)';
-    w = wave(ndx(:),:);
-    w = reshape(w,[windowSize,nSpikes,nChans]);
+    if isempty(spikes)
+        w = [];
+    else
+        ndx = bsxfun(@plus,spikes,win)';
+        w = wave(ndx(:),:);
+        w = reshape(w,[windowSize,nSpikes,nChans]);
+    end
 end
 
 % store waveforms
@@ -58,5 +62,9 @@ sdt = setChunkData(sdt,'spikeWaveforms',w);
 % extract times
 Fs = getParams(sdt,'Fs');
 t = getCurrentTime(sdt);
-t = t(fix(spikes)) + subsample * 1000 / Fs;
+if ~isempty(spikes)
+    t = t(fix(spikes)) + subsample * 1000 / Fs;
+else
+    t = [];
+end
 sdt = setChunkData(sdt,'spikeTimes',t);
