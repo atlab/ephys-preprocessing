@@ -20,8 +20,7 @@ fprintf('Processing %d chunks of data\n',nChunks)
 sdt.chunks = struct('spikeTimes',{});
 for i = 1:nChunks
     
-    type = class(baseReader(sdt.reader));
-    if strcmp(type,'baseReaderElectrophysiology')
+    if ~isa(getBaseReader(sdt.reader), 'baseReaderHammer')
         % read current filtered waveform chunk (flip so peaks are upwards)
         sdt.current.waveform = -toMuV(sdt.reader, sdt.reader(i));
     else
