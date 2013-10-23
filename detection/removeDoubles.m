@@ -16,7 +16,7 @@ spikes = getCurrentData(sdt, 'spikeSamples');
 
 % remove local maxima too close to each other (starting with largest
 % working down to smallest spike)
-[~, maxOrder] = sort(interp1(r, spikes, 'cubic'), 'descend');
+[~, maxOrder] = sort(interp1(r, spikes, 'pchip'), 'descend');
 Fs = getSamplingRate(getReader(sdt));
 refrac = params.refrac / 1000 * Fs;
 nMax = numel(spikes);
