@@ -27,7 +27,7 @@ nChunks = numel(chunks);
 sd = zeros(nChunks, 1);
 m = sd;
 for j = 1:nChunks
-    x = -reader(chunks(j));
+    x = -toMuV(reader, reader(chunks(j)));
     x = apply(params.operator, x);
     m(j) = median(x);
     sd(j) = median(abs(x - m(j))) / 0.6745;
@@ -39,4 +39,4 @@ sdt = setGlobalData(sdt, 'threshold', threshold);
 sdt = setGlobalData(sdt, 'noiseMean', m);
 sdt = setGlobalData(sdt, 'noiseStd', sd);
 
-fprintf('  Determined threshold is %.1f muV\n', toMuV(reader, threshold))
+fprintf('  Determined threshold is %.1f muV\n', threshold)
