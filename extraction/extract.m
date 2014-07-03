@@ -46,14 +46,10 @@ if any(subsample ~= 0)
         % vectorized interpolation routine)
         w(:,:,i) = interpcus(iWin,reshape(wave(x,i),size(x)),xi);
     end
-else
-    if isempty(spikes)
-        w = [];
-    else
-        ndx = bsxfun(@plus,spikes,win)';
-        w = wave(ndx(:),:);
-        w = reshape(w,[windowSize,nSpikes,nChans]);
-    end
+elseif ~isempty(spikes)
+    ndx = bsxfun(@plus,spikes,win)';
+    w = wave(ndx(:),:);
+    w = reshape(w,[windowSize,nSpikes,nChans]);
 end
 
 % store waveforms
