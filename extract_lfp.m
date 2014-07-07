@@ -23,7 +23,8 @@ blockSize = blockSize + prod(factors) -  mod(blockSize, prod(factors));
 
 pr = packetReader(br, 1, 'stride', blockSize);
 for p=1:length(pr)
-    disp(p)
+%     disp(p)
+    fprintf('%4d of %d\n', p, length(pr))
 
     % this is not exaclty the most efficient code...
     % packet = pr(p) * avMatrix;
@@ -44,7 +45,7 @@ for p=1:length(pr)
     else
         written = written + extendDataset(dataSet, int32(packet), written);
     end
-    fprintf('.')
+%     fprintf('.')
 end
 
 H5D.close(dataSet);
