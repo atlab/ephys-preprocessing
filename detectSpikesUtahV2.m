@@ -1,13 +1,9 @@
-function artifacts = detectSpikesUtah(recFile, electrode, outFile)
-% Detect all spikes in a utah channel.
-%   This is an improved version that automatically removes noise segments
-%   in the data, which sometimes occurs at the beginning and the end of
-%   recordings if the preamps are turned off. It also fixes a minor issue
-%   in a previous version where many spikes were detected multiple times at
-%   slightly offset points in time.
+function artifacts = detectSpikesUtahV2(recFile, electrode, outFile)
+% Detect all spikes in a Utah channel.
+%   Compared to the version 1 of detectSpikesUtah, this one utilizes
+%   detection threshold of 4.5 standard deviations as opposed to the 5.
 %
-% AE 2012-11-09
-% JC 2013-05-08
+% EYW 2014-08-08 M
 
 % get the raw channel and reference data
 rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
@@ -26,7 +22,7 @@ sdt = SpikeDetectionToolchain(pr);
 % individual steps
 alignSignal = SignedVectorNorm('p', 2);
 
-threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
+threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 4.5); % change here for threshold sigma setting?
 detection = @(sdt) detectPeakExcludeNoise(sdt);
 alignment = @(sdt) alignCOM(sdt, 'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 removal = @(sdt) removeDoubles(sdt, 'refrac', 0.3);
