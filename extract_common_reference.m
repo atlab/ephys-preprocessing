@@ -1,11 +1,15 @@
 function extract_common_reference(inPath, varargin)
+% extract common reference value from
+% inPath - file pattern for raw data e.g. 'Electrophysiology%d.h5'
 
 params.channels = 1:96;
 for i=1:2:length(varargin)
     params.(varargin{i}) = varargin{i+1};
 end
 
-% Load data
+% Load data: behavior depends on the type of source file (namely those from
+% Hammer without any file extension and those from newer system ending in
+% .h5
 if ~isempty(strfind(inPath, '%u.h5')) || ~isempty(strfind(inPath, '%d.h5'))
     sourceFilename = getLocalPath(inPath);
     br = baseReader(sourceFilename);
@@ -14,8 +18,8 @@ if ~isempty(strfind(inPath, '%u.h5')) || ~isempty(strfind(inPath, '%d.h5'))
     gain = getfield(struct(br),'scale');
     ver = 1;
     sign = 1;
-else
-    sourceFilename = fullfile(getLocalPath(inPath), 'neuro%d');
+else % handling for Hammer
+    sourceFilename = fullfile(getLocalPath(inPath));
     
     % Get params from file
     fpSource = H5Tools.openFamily(sourceFilename);
@@ -25,7 +29,7 @@ else
     H5G.close(rootSource);
     H5F.close(fpSource);
 
-    br = baseReader(sourceFilename);
+    br = baseReader(sourceFilename); % this will create baseReaderHammer
     
     tets = getRecordedTetrodes(br);
     tetNames = cell(length(tets), 1);
@@ -33,11 +37,15 @@ else
         tetNames{t} = sprintf('t%uc1', tets(t));
     end
     
-    sign = -1;
+    sign = 1; % flip for the Hammer
+    % Modified this so no sign flip occurs - take care of this in
+    % baseReaderHammer - EYW 2014-09-22
 end
+
+
 samplingRate = getSamplingRate(br);
 
-fp = H5Tools.createFile( fullfile(getLocalPath(inPath), 'ref%d'), 'driver', 'family' );
+fp = H5Tools.createFile( fullfile(getLocalPath(fileparts(inPath)), 'ref%d'), 'driver', 'family' );
 
 % Limit memory usage
 targetSize = 100 * 2.^20;       % 100 MB chunks
@@ -50,7 +58,7 @@ for p=1:length(pr)
     packet = sign * mean(prpack(:,params.channels),2);
 
     if (p==1)
-        [dataSet, written] = seedDataset(fp, packet);
+        [dataSet, written] = seedDataset(fp, packet); % 'written' keeps track of size of written data
     else
         written = written + extendDataset(dataSet, packet, written);
     end
