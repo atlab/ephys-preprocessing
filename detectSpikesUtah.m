@@ -10,7 +10,11 @@ function artifacts = detectSpikesUtah(recFile, electrode, outFile)
 % JC 2013-05-08
 
 % get the raw channel and reference data
-rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
+br = baseReader(recFile);
+names = getChannelNames(br); 
+rawChannel = baseReader(recFile, names{electrode}); % modified to accept old format - EYW 8/29/2014
+%rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
+
 refFile = fullfile(fileparts(recFile),'ref%d');
 ref = baseReader(refFile);
 

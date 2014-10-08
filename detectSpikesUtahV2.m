@@ -4,9 +4,13 @@ function artifacts = detectSpikesUtahV2(recFile, electrode, outFile)
 %   detection threshold of 4.5 standard deviations as opposed to the 5.
 %
 % EYW 2014-08-08 M
+% GHD 2014-08-28 lines 11 through 13
 
 % get the raw channel and reference data
-rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
+% modified how names are called to make compatible with Woody's old data
+br = baseReader(recFile);
+names = getChannelNames(br); 
+rawChannel = baseReader(recFile, names{electrode});
 refFile = fullfile(fileparts(recFile),'ref%d');
 ref = baseReader(refFile);
 
