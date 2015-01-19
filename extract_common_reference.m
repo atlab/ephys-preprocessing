@@ -13,12 +13,11 @@ end
 if ~isempty(strfind(inPath, '%u.h5')) || ~isempty(strfind(inPath, '%d.h5'))
     sourceFilename = getLocalPath(inPath);
     br = baseReader(sourceFilename);
-    inPath = fileparts(inPath);
     tetNames = getfield(struct(br),'chNames');
     gain = getfield(struct(br),'scale');
     ver = 1;
 else % handling for Hammer
-    sourceFilename = fullfile(getLocalPath(inPath));
+    sourceFilename = fullfile(getLocalPath(inPath), 'neuro%d');
     
     % Get params from file
     fpSource = H5Tools.openFamily(sourceFilename);
