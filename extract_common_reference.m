@@ -17,7 +17,6 @@ if ~isempty(strfind(inPath, '%u.h5')) || ~isempty(strfind(inPath, '%d.h5'))
     tetNames = getfield(struct(br),'chNames');
     gain = getfield(struct(br),'scale');
     ver = 1;
-    sign = 1;
 else % handling for Hammer
     sourceFilename = fullfile(getLocalPath(inPath));
     
@@ -36,10 +35,6 @@ else % handling for Hammer
     for t=1:length(tets)
         tetNames{t} = sprintf('t%uc1', tets(t));
     end
-    
-    sign = 1; % flip for the Hammer
-    % Modified this so no sign flip occurs - take care of this in
-    % baseReaderHammer - EYW 2014-09-22
 end
 
 
@@ -55,7 +50,7 @@ pr = packetReader(br, 1, 'stride', blockSize);
 for p=1:length(pr)
 
     prpack = pr(p);
-    packet = sign * mean(prpack(:,params.channels),2);
+    packet = mean(prpack(:,params.channels),2);
 
     if (p==1)
         [dataSet, written] = seedDataset(fp, packet); % 'written' keeps track of size of written data
