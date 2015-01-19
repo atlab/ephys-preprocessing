@@ -5,15 +5,19 @@ function artifacts = detectSpikesUtah(recFile, electrode, outFile)
 %   recordings if the preamps are turned off. It also fixes a minor issue
 %   in a previous version where many spikes were detected multiple times at
 %   slightly offset points in time.
-%
-% AE 2012-11-09
-% JC 2013-05-08
 
 % get the raw channel and reference data
-br = baseReader(recFile);
-names = getChannelNames(br); 
-rawChannel = baseReader(recFile, names{electrode}); % modified to accept old format - EYW 8/29/2014
-%rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
+brraw = baseReader(recFile);
+switch class(brraw)
+    case 'baseReaderElectrophysiology'
+        rawChannel = baseReader(recFile, sprintf('Electrode%02d', electrode));
+    case 'baseReaderHammer'
+        tt = ceil(electrode / 4);
+        ch = rem(electrode - 1, 4) + 1;
+        rawChannel = baseReader(recFile, sprintf('t%dc%d', tt, ch));
+    otherwise
+        error('Dont''t know this file type. HELP!!!')
+end
 
 refFile = fullfile(fileparts(recFile),'ref%d');
 ref = baseReader(refFile);
