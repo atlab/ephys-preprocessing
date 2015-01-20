@@ -1,14 +1,11 @@
 function setPath
 
-if ~exist('baseReaderElectrophysiology', 'file')
-    run(getLocalPath('/lab/libraries/hdf5matlab/setPath'))
-end
-
 base = fileparts(mfilename('fullpath'));
-addpath(fullfile(base,''))
-addpath(fullfile(base,'alignment'))
-addpath(fullfile(base,'detection'))
-addpath(fullfile(base,'threshold'))
-addpath(fullfile(base,'extraction'))
-addpath(fullfile(base,'signals'))
-clear base
+addpath(fullfile(base, 'spikedetection'))
+addpath(fullfile(base, 'spikedetection/alignment'))
+addpath(fullfile(base, 'spikedetection/detection'))
+addpath(fullfile(base, 'spikedetection/threshold'))
+addpath(fullfile(base, 'spikedetection/extraction'))
+addpath(fullfile(base, 'spikedetection/signals'))
+addpath(fullfile(base, 'lfp'))
+addpath(fullfile(base, 'commonref'))
