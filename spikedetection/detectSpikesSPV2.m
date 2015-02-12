@@ -2,11 +2,9 @@ function detectSpikesSPV2(recFile, channel, outFile)
 % Detect all spikes in an SP recording file.
 % AE 2011-10-14
 
-% get the raw and reference data
-br = baseReader(recFile, sprintf('s1c%d', channel));
-names = getChannelNames(br); 
-rawChannel = baseReader(recFile, names{electrode});
-refFile = fullfile(fileparts(recFile),'ref%d');
+% Get raw channel and reference data
+rawChannel = baseReader(recFile, sprintf('s1c%d', channel));
+refFile = fullfile(fileparts(recFile),'ref%d.h5');
 ref = baseReader(refFile);
 
 % create packetReader for data access
