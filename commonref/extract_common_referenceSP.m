@@ -1,6 +1,9 @@
 function extract_common_referenceSP(inPath, varargin)
 % extract common reference value from
 % inPath - file pattern for raw data e.g. 'Electrophysiology%d.h5'
+% for use with silicon probes
+% Hammer handling has not been validated with this code
+
 
 params.channels = 1:32;
 for i=1:2:length(varargin)
@@ -13,54 +16,48 @@ end
 if ~isempty(strfind(inPath, '%u.h5')) || ~isempty(strfind(inPath, '%d.h5'))
     sourceFilename = getLocalPath(inPath);
     br = baseReader(sourceFilename);
-    inPath = fileparts(inPath);
-    tetNames = getfield(struct(br),'chNames');
-    gain = getfield(struct(br),'scale');
-    ver = 1;
-    sign = 1;
-else % handling for Hammer
-    sourceFilename = fullfile(getLocalPath(inPath));
+else
+    % handling for Hammer
+    
+    error('extract_common_reference:hammer','Hammer has not been validated since updating this method. Check scales');
+    sourceFilename = fullfile(getLocalPath(inPath), 'neuro%d');
     
     % Get params from file
     fpSource = H5Tools.openFamily(sourceFilename);
     rootSource = H5G.open(fpSource, '/');
-    ver = H5Tools.readAttribute(rootSource, 'version');
-    gain = H5Tools.readAttribute(rootSource, 'gain');
     H5G.close(rootSource);
     H5F.close(fpSource);
 
-    br = baseReader(sourceFilename); % this will create baseReaderHammer
-    
+    br = baseReader(sourceFilename); % this will create baseReaderHammer 
     tets = getRecordedTetrodes(br);
-    tetNames = cell(length(tets), 1);
-    for t=1:length(tets)
-        tetNames{t} = sprintf('t%uc1', tets(t));
-    end
-    
-    sign = 1; % flip for the Hammer
-    % Modified this so no sign flip occurs - take care of this in
-    % baseReaderHammer - EYW 2014-09-22
-end
 
+end
 
 samplingRate = getSamplingRate(br);
 
-fp = H5Tools.createFile( fullfile(getLocalPath(inPath), 'ref%d'), 'driver', 'family' ); % remove fileparts 2014-10-27 GD
+outFile = fullfile(getLocalPath(fileparts(inPath)), 'ref%d.h5');
+fp = H5Tools.createFile(outFile, 'driver', 'family');
 
 % Limit memory usage
 targetSize = 100 * 2.^20;       % 100 MB chunks
 blockSize = ceil(targetSize / 10 / length(params.channels));
 
+% this constant is expected by our data standard
+dataset_name = '/data';
+
 pr = packetReader(br, 1, 'stride', blockSize);
 for p=1:length(pr)
 
     prpack = pr(p);
-    packet = sign * mean(prpack(:,params.channels),2);
-
+    packet = mean(prpack(:,params.channels),2);
+    
     if (p==1)
-        [dataSet, written] = seedDataset(fp, packet); % 'written' keeps track of size of written data
+        % both axes are set to unlimited because if they are singleton
+        % the writeDataset method strips out that dimension to "maintain
+        % backward compatibility"
+        H5Tools.writeDataset(fp, dataset_name, packet, [100000,1], {'H5S_UNLIMITED','H5S_UNLIMITED'});
     else
-        written = written + extendDataset(dataSet, packet, written);
+        H5Tools.appendDataset(fp, dataset_name, packet, 1);
     end
     
     fprintf('.');
@@ -69,70 +66,13 @@ for p=1:length(pr)
     end
 end
 
-H5D.close(dataSet);
-close(br)
-
 % Now create/copy the remaining attributes etc.
-rootDest = H5G.open(fp, '/');
-H5Tools.writeAttribute(rootDest, 'version', ver);
-H5Tools.writeAttribute(rootDest, 'actual sample rate', samplingRate);
-H5Tools.writeAttribute(rootDest, 'sample rate', samplingRate);
-H5Tools.writeAttribute(rootDest, 'gain', gain);
-
-H5G.close(rootDest);
-
-tetNames = char(tetNames);
-tempNames = zeros(81, size(tetNames,1), 'uint16');
-tempNames(1:size(tetNames, 2), :) = uint16(tetNames');
-tempNames(tempNames == ' ') = 0;
-tempNames = char(tempNames);
-H5Tools.writeDataset(fp, '/channel names', tempNames);
-
+H5Tools.writeAttribute(fp, 'Fs', samplingRate);
+H5Tools.writeAttribute(fp, 'channelNames', 'common_ref');
+H5Tools.writeAttribute(fp, 'class', 'Electrophysiology');
+H5Tools.writeAttribute(fp, 'version', 1);
+H5Tools.writeAttribute(fp, 'scale', 1.0);  % data are in muV from previous read
+H5Tools.writeAttribute(fp, 't0', br(1,'t'));
 H5F.close(fp);
 
-function [dataSet, written] = seedDataset(fp, data)
-
-nbDims = 2;
-dataDims = size(data);
-dataDims(1:2) = dataDims([2 1]);
-dataType = H5Tools.getHDF5Type(data);
-dataSpace = H5S.create_simple(nbDims, dataDims, [dataDims(1) -1]);
-
-setProps = H5P.create('H5P_DATASET_CREATE'); % create property list
-chunkSize = [4, 100000]; 		% define chunk size
-chunkSize = min(chunkSize, dataDims);
-H5P.set_chunk(setProps, chunkSize); % set chunk size in property list
-
-dataSet = H5D.create(fp, '/data', dataType, dataSpace, setProps);
-H5D.write(dataSet, 'H5ML_DEFAULT', 'H5S_ALL', 'H5S_ALL', 'H5P_DEFAULT', data);
-
-H5P.close(setProps);
-H5T.close(dataType);
-H5S.close(dataSpace);
-written = size(data, 1);
-
-
-function written = extendDataset(dataSet, data, written)
-
-% Extend dataset
-H5D.extend(dataSet, [size(data,2), written+size(data,1)])
-
-% Select appended part of the dataset
-fileSpace = H5D.get_space(dataSet);
-H5S.select_hyperslab(fileSpace, 'H5S_SELECT_SET', [0, written], [], fliplr(size(data)), []);
-
-% Create a memory dataspace of equal size.
-memSpace = H5S.create_simple(2, fliplr(size(data)), []);
-
-% And write the data
-% [s f] = H5S.get_select_bounds(fileSpace);
-%disp(s), disp(f)
-% [s f] = H5S.get_select_bounds(memSpace);
-%disp(s), disp(f)
-H5D.write(dataSet, 'H5ML_DEFAULT', memSpace, fileSpace, 'H5P_DEFAULT', data);
-
-% Clean up
-H5S.close(memSpace);
-H5S.close(fileSpace);
-written = size(data,1);
-
+close(br)
