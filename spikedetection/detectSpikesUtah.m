@@ -19,7 +19,7 @@ switch class(brraw)
         error('Dont''t know this file type. HELP!!!')
 end
 
-refFile = fullfile(fileparts(recFile),'ref%d');
+refFile = fullfile(fileparts(recFile),'ref%d.h5');
 ref = baseReader(refFile);
 
 % create packetReader for data access
