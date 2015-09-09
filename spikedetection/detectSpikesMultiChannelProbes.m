@@ -13,7 +13,7 @@ sdt = SpikeDetectionToolchain(pr);
 alignSignal = RectifiedVectorNorm('p', 2);
 
 threshold = @(sdt) estThresholdPerChannel(sdt, 'nParts', 20, 'sigmaThresh', 5);
-detection = @(sdt) detectPeakExcludeNoise(sdt);
+detection = @(sdt) detectCentralPeakExcludeNoise(sdt);
 alignment = @(sdt) alignCOM(sdt, 'operator', alignSignal, 'searchWin', -10:10, 'upsample', 5, 'peakFrac', 0.5, 'subtractMeanNoise', false);
 removal = @(sdt) removeDoubles(sdt, 'refrac', 0.3);
 extraction = @(sdt) extract(sdt, 'ctPoint', 10, 'windowSize', 28);
