@@ -57,7 +57,7 @@ x = resample(x,up,1,len);
 %   weigh amplitudes by distance to detected event to favor solution close
 %   to the detected location
 [nSamples,nSpikes] = size(x);
-[foo,peakNdx] = max(bsxfun(@times,triang(nSamples),x),[],1);
+[foo,peakNdx] = max(bsxfun(@times,triang(nSamples - 1),x(1:end-1,:)),[],1);
 
 % align to center of mass
 dx = diff(x);
@@ -69,9 +69,9 @@ for i = 1:nSpikes
     p = peakNdx(i);
     if ~(dx(p-1,i) > 0 && dx(p,i) <= 0)
         m1 = find(dx(1:p-2,i) > 0 & dx(2:p-1,i) <= 0,1,'last');
-        if isempty(m1), m1 = p; end
+        if isempty(m1), m1 = 0; end
         m2 = find(dx(p:end-1,i) > 0 & dx(p+1:end,i) <= 0,1,'first');
-        if isempty(m2), m2 = nSamples-1; end
+        if isempty(m2), m2 = nSamples-p; end
         if p - m1 < m2
             p = m1 + 1;
         else
